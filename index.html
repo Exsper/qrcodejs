@@ -30,7 +30,12 @@
 			if (document.getElementById("imgcheck").checked) {
 				let context = imgcanvas.getContext('2d');
 				context.clearRect(0, 0, imgcanvas.width, imgcanvas.height);
-				context.drawImage(centerimage, 0, 0, imgcanvas.width, imgcanvas.height);
+				// 裁剪正方形
+				let imgLength = Math.min(centerimage.width, centerimage.height);
+				let sx = (centerimage.width - imgLength) / 2;
+				let sy = (centerimage.height - imgLength) / 2;
+				context.drawImage(centerimage, sx, sy, imgLength, imgLength, 0, 0, imgcanvas.width, imgcanvas.height);
+				centerimage.src = imgcanvas.toDataURL("image/png");
 				applyPic();
 			}
 		}
@@ -65,7 +70,7 @@
 				_picImage.alt = "Scan me!";
 				_picImage.src = _picCanvas.toDataURL("image/png");
 				_picImage.style.display = "block";
-				_picCanvas.style.display = "none";		
+				_picCanvas.style.display = "none";
 				qrcodewithimg.appendChild(_picImage);
 			}
 		}
