@@ -1,44 +1,107 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html
+	PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="ko" lang="ko">
+
 <head>
-<title>Cross-Browser QRCode generator for Javascript</title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
-<script type="text/javascript" src="jquery.min.js"></script>
-<script type="text/javascript" src="qrcode.js"></script>
+	<title>Cross-Browser QRCode generator for Javascript</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+	<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no" />
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="qrcode.js"></script>
 </head>
+
 <body>
-<input id="text" type="text" value="http://jindo.dev.naver.com/collie" style="width:80%" /><br />
-<div id="qrcode" style="width:100px; height:100px; margin-top:15px;"></div>
+	<input id="text" type="text" value="http://jindo.dev.naver.com/collie" style="width:80%" /><br />
+	<input type="checkbox" id="imgcheck" onchange="makeCode()"><span>插入图片：</span><input type="file"
+		id="fileInput"><br />
+	<canvas id="imgcanvas" width="60px" height="60px" hidden>
+		Canvas not supported
+	</canvas><br />
+	<div id="qrcode" style="width:200px; height:200px; margin-top:15px;"></div>
+	<div id="qrcodewithimg" style="width:200px; height:200px; margin-top:15px;"></div>
 
-<script type="text/javascript">
-var qrcode = new QRCode(document.getElementById("qrcode"), {
-	width : 100,
-	height : 100
-});
+	<script type="text/javascript">
+		let imgcanvas = document.getElementById('imgcanvas');
+		let imageSetted = false;
 
-function makeCode () {		
-	var elText = document.getElementById("text");
-	
-	if (!elText.value) {
-		alert("Input a text");
-		elText.focus();
-		return;
-	}
-	
-	qrcode.makeCode(elText.value);
-}
-
-makeCode();
-
-$("#text").
-	on("blur", function () {
-		makeCode();
-	}).
-	on("keydown", function (e) {
-		if (e.keyCode == 13) {
-			makeCode();
+		let centerimage = new Image();
+		centerimage.crossOrigin = "Anonymous";
+		centerimage.onload = function () {
+			if (document.getElementById("imgcheck").checked) {
+				let context = imgcanvas.getContext('2d');
+				context.clearRect(0, 0, imgcanvas.width, imgcanvas.height);
+				context.drawImage(centerimage, 0, 0, imgcanvas.width, imgcanvas.height);
+				applyPic();
+			}
 		}
-	});
-</script>
+
+		let fileInput = document.querySelector('#fileInput');
+		fileInput.onchange = function () {
+			imgcanvas.hidden = false;
+			var file = this.files[0];
+			var reader = new FileReader();
+			reader.readAsDataURL(file);
+			reader.onload = function () {
+				centerimage.src = this.result;
+			};
+			imageSetted = true;
+		};
+
+		function applyPic() {
+			let qrcodewithimg = document.getElementById("qrcodewithimg");
+			while (qrcodewithimg.hasChildNodes()) qrcodewithimg.removeChild(qrcodewithimg.lastChild);
+			if (document.getElementById("imgcheck").checked && imageSetted) {
+				let _picCanvas = document.createElement("canvas");
+				_picCanvas.width = 200;
+				_picCanvas.height = 200;
+				qrcodewithimg.appendChild(_picCanvas);
+				let _picContext = _picCanvas.getContext("2d");
+				let codeimg = new Image();
+				codeimg.src = document.getElementById("qrcodeimg").src;
+				_picContext.clearRect(0, 0, _picCanvas.width, _picCanvas.height);
+				_picContext.drawImage(codeimg, 0, 0, _picCanvas.width, _picCanvas.height);
+				_picContext.drawImage(centerimage, (_picCanvas.width - imgcanvas.width) / 2, (_picCanvas.height - imgcanvas.height) / 2, imgcanvas.width, imgcanvas.height);
+				_picImage = document.createElement("img");
+				_picImage.alt = "Scan me!";
+				_picImage.src = _picCanvas.toDataURL("image/png");
+				_picImage.style.display = "block";
+				_picCanvas.style.display = "none";		
+				qrcodewithimg.appendChild(_picImage);
+			}
+		}
+
+
+
+		var qrcode = new QRCode(document.getElementById("qrcode"), {
+			width: 200,
+			height: 200
+		});
+
+		async function makeCode() {
+			var elText = document.getElementById("text");
+
+			if (!elText.value) {
+				alert("Input a text");
+				elText.focus();
+				return;
+			}
+
+			await qrcode.makeCode(elText.value);
+
+
+			applyPic();
+		}
+
+		makeCode();
+
+		$("#text").
+			on("blur", function () {
+				makeCode();
+			}).
+			on("keydown", function (e) {
+				if (e.keyCode == 13) {
+					makeCode();
+				}
+			});
+	</script>
 </body>
